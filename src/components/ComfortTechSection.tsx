@@ -123,3 +123,4 @@ export function ComfortTechSection() {
     </section>
   );
 }
+

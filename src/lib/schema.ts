@@ -50,3 +50,4 @@ export function getClinicSchema(siteUrl: string) {
     sameAs: [CLINIC_INFO.instagramUrl, CLINIC_INFO.facebookUrl],
   };
 }
+

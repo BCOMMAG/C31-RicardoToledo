@@ -18,6 +18,7 @@ export interface TreatmentItem {
   id: string;
   name: string;
   badge: string;
+  image: string;
   summary: string;
   details: string;
   benefits: string[];
@@ -32,7 +33,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     subtitle: "Reabilitação Oral Fixa com Segurança e Conforto",
     description:
       "Soluções definitivas para devolver eficiência mastigatória, estabilidade ao falar e confiança ao sorrir — desde implantes unitários até próteses totais fixas sobre implantes.",
-    heroImage: "/2026-11-24_22-49.png",
+    heroImage: "/tratamentos/trat_protocolo.jpg",
     highlights: [
       "Prótese Protocolo fixa suportada por 4 a 6 implantes",
       "Opção de Sedação Venosa Consciente com anestesiologista",
@@ -44,6 +45,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "protese-protocolo",
         name: "Prótese Protocolo sobre Implantes",
         badge: "Dentes Fixos Definitivos",
+        image: "/tratamentos/trat_protocolo.jpg",
         summary:
           "Solução fixa suportada por 4 a 6 implantes dentários para quem perdeu a maioria ou todos os dentes de uma arcada.",
         details:
@@ -61,6 +63,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "implante-sem-dor",
         name: "Implante Dentário sem Dor (com Sedação)",
         badge: "Conforto Cirúrgico",
+        image: "/tratamentos/trat_implante.jpg",
         summary:
           "Implantes unitários ou múltiplos realizados com anestesia local precisa e opção de sedação venosa consciente.",
         details:
@@ -78,6 +81,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "protese-total",
         name: "Prótese Total (Convencional, Imediata & Overdenture)",
         badge: "Reabilitação Funcional",
+        image: "/tratamentos/trat_protese_total.jpg",
         summary:
           "Restauração completa da função mastigatória, estética e autoestima com opções adaptadas a cada caso clínico.",
         details:
@@ -106,7 +110,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     subtitle: "Harmonia, Cor e Proporção sem Perder a Naturalidade",
     description:
       "Tratamentos estéticos planejados com precisão na Dentística Restauradora para corrigir formato, cor, fraturas e espaçamentos com durabilidade e aspecto natural.",
-    heroImage: "/2026-11-24_22-55.png",
+    heroImage: "/tratamentos/trat_lentes.jpg",
     highlights: [
       "Lentes de Contato Dentais em porcelana ultrafina",
       "Facetas e Restaurações Estéticas imperceptíveis",
@@ -118,6 +122,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "lentes-contato-dentais",
         name: "Lentes de Contato Dentais",
         badge: "Porcelana Ultrafina",
+        image: "/tratamentos/trat_lentes.jpg",
         summary:
           "Lâminas ultrafinas de porcelana aplicadas sobre os dentes para aperfeiçoar cor, forma, alinhamento e espaçamentos.",
         details:
@@ -135,6 +140,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "facetas-restauracoes-clareamento",
         name: "Facetas, Restaurações Estéticas & Clareamento",
         badge: "Dentística Restauradora",
+        image: "/tratamentos/trat_clareamento.jpg",
         summary:
           "Reconstruções estéticas em resina de alta performance, substituição de restaurações antigas e clareamento seguro.",
         details:
@@ -163,7 +169,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     subtitle: "Alinhamento Preciso para Jovens e Adultos",
     description:
       "Abordagens ortodônticas modernas — incluindo o sistema de alinhadores transparentes Invisalign — para alinhar seu sorriso com conforto, discrição e facilidade na higiene.",
-    heroImage: "/2026-11-24_22-52_1.png",
+    heroImage: "/tratamentos/trat_invisalign.jpg",
     highlights: [
       "Sistema Invisalign: alinhadores quase invisíveis e removíveis",
       "Higiene bucal facilitada e liberdade ao se alimentar",
@@ -175,6 +181,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "invisalign",
         name: "Sistema Invisalign (Alinhadores Transparentes)",
         badge: "Ortodontia Discreta",
+        image: "/tratamentos/trat_invisalign.jpg",
         summary:
           "Realinhamento dentário moderno e praticamente invisível, sem bráquetes ou fios metálicos aparentes.",
         details:
@@ -192,6 +199,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "ortodontia-convencional",
         name: "Ortodontia Corretiva & Funcional",
         badge: "Saúde da Oclusão",
+        image: "/tratamentos/trat_ortodontia.jpg",
         summary:
           "Correção de apinhamentos, mordida cruzada e desalinhamentos para equilibrar estética e função mastigatória.",
         details:
@@ -220,7 +228,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     subtitle: "Construindo Sorrisos Saudáveis Desde a Infância",
     description:
       "Atendimento acolhedor, educativo e preventivo voltado para crianças e adolescentes, garantindo desenvolvimento ósseo adequado e uma relação positiva com o dentista.",
-    heroImage: "/2026-11-24_22-52.png",
+    heroImage: "/tratamentos/trat_odontopediatria.jpg",
     highlights: [
       "Avaliação ortodôntica preventiva recomendada aos 7 anos",
       "Educação lúdica de higiene bucal para crianças e pais",
@@ -232,6 +240,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "odontopediatria-preventiva",
         name: "Odontopediatria Preventiva & Acolhedora",
         badge: "Infância & Adolescência",
+        image: "/tratamentos/trat_odontopediatria.jpg",
         summary:
           "Cuidado completo dedicado a criar uma base sólida para a saúde bucal infantil sem traumas ou ansiedades.",
         details:
@@ -248,6 +257,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "ortodontia-infantil",
         name: "Ortodontia Preventiva Infantil",
         badge: "A partir dos 7 anos",
+        image: "/tratamentos/trat_orto_infantil.jpg",
         summary:
           "Acompanhamento precoce do crescimento ósseo e dos primeiros molares permanentes para evitar problemas complexos futuros.",
         details:
@@ -276,7 +286,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     subtitle: "Preservação dos Dentes Naturais e Alívio Rápido da Dor",
     description:
       "Cuidados essenciais da Odontologia Geral para manter gengivas saudáveis, tratar cáries no início, eliminar tártaro e salvar dentes comprometidos através da Endodontia.",
-    heroImage: "/2026-11-24_22-53.png",
+    heroImage: "/tratamentos/trat_canal.jpg",
     highlights: [
       "Tratamento de Canal (Endodontia) preservando o dente natural",
       "Limpeza Profissional contra tártaro, gengivite e mau hálito",
@@ -288,6 +298,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "tratamento-canal",
         name: "Tratamento de Canal (Endodontia)",
         badge: "Alívio & Preservação",
+        image: "/tratamentos/trat_canal.jpg",
         summary:
           "Remoção segura de tecido pulpar inflamado ou infectado para eliminar dores, conter infecções e evitar extrações.",
         details:
@@ -304,6 +315,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "limpeza-periodontia",
         name: "Limpeza Profissional & Periodontia",
         badge: "Saúde Gengival",
+        image: "/tratamentos/trat_limpeza.jpg",
         summary:
           "Remoção completa de tártaro, placa bacteriana e manchas superficiais, prevenindo gengivite, periodontite e halitose.",
         details:
@@ -321,6 +333,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "tratamento-carie",
         name: "Tratamento de Cáries & Restaurações",
         badge: "Diagnóstico Precoce",
+        image: "/tratamentos/trat_carie.jpg",
         summary:
           "Remoção de lesões cariosas, selamento da cavidade e restauração estética antes que atinjam a raiz.",
         details:
@@ -349,7 +362,7 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     subtitle: "Proteção dos Dentes e Alívio das Dores na Mandíbula",
     description:
       "Diagnóstico e confecção sob medida de Placa Miorrelaxante para proteger sua estrutura dental do desgaste noturno e aliviar tensões musculares e dores de cabeça.",
-    heroImage: "/2026-11-24_22-55_1.png",
+    heroImage: "/tratamentos/trat_bruxismo.jpg",
     highlights: [
       "Placa miorrelaxante confeccionada sob medida para conforto",
       "Proteção eficaz contra trincas, fraturas e desgaste dental",
@@ -361,13 +374,14 @@ export const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         id: "placa-miorrelaxante",
         name: "Placa Miorrelaxante para Bruxismo",
         badge: "Proteção & Alívio ATM",
+        image: "/tratamentos/trat_bruxismo.jpg",
         summary:
           "Dispositivo móvel sob medida (acrílico/acetato) que impede o atrito destrutivo entre as arcadas, especialmente à noite.",
         details:
           "O bruxismo involuntário desgasta o esmalte e sobrecarrega a articulação temporomandibular. A placa protege os dentes, relaxa a musculatura e previne perdas dentárias a longo prazo.",
         benefits: [
           "Impede o contato direto e o desgaste entre os dentes",
-          "Alivia a pressão na articulação temporomandibular (ATM)",
+          "Alivia a pressão muscular sobre a ATM",
           "Ajuda a reduzir dores faciais e cefaleias tensionais",
           "Previne trincas e fraturas dentárias a longo prazo",
         ],

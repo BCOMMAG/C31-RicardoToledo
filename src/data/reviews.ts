@@ -83,3 +83,4 @@ export const FEATURED_REVIEWS: GoogleReview[] = [
       "Excelente profissional! O Dr. Ricardo Toledo é extremamente atencioso, explica tudo com clareza e faz você se sentir confortável. O atendimento foi impecável e o resultado superou as expectativas!",
   },
 ];
+

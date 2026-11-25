@@ -11,3 +11,4 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: "https://ricardotoledo.pages.dev/sitemap.xml",
   };
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { TREATMENT_CATEGORIES, TreatmentItem } from "@/data/treatments";
 import { CLINIC_INFO } from "@/lib/data";
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/SocialIcons";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { gsap } from "gsap";
 
 interface FlattenedProcedure extends TreatmentItem {
   categorySlug: string;
@@ -31,46 +33,112 @@ const ALL_PROCEDURES: FlattenedProcedure[] = TREATMENT_CATEGORIES.flatMap((cat) 
   }))
 );
 
+// Lista duplicada para criar loop lateral infinito e perfeitamente contínuo sem saltos
+const LOOP_PROCEDURES = [...ALL_PROCEDURES, ...ALL_PROCEDURES];
+
 export function TreatmentsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isPausedByUser, setIsPausedByUser] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const [selectedItem, setSelectedItem] = useState<FlattenedProcedure | null>(null);
 
-  // Looping lateral contínuo
-  useEffect(() => {
-    if (isPausedByUser) return;
-    const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % ALL_PROCEDURES.length);
-    }, 3800);
-    return () => clearInterval(timer);
-  }, [isPausedByUser]);
-
-  // Rolar carrossel e menu suavemente para o item selecionado
+  // 1. Esteira Contínua Ultra-Suave via requestAnimationFrame (sem trancos ou pulos)
   useEffect(() => {
     const container = carouselRef.current;
-    if (container) {
-      const card = container.children[activeIndex] as HTMLElement | undefined;
-      if (card) {
-        const left = card.offsetLeft - (container.clientWidth / 2 - card.clientWidth / 2);
-        container.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
-      }
+    if (!container) return;
+
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
     }
 
+    let rafId: number;
+    let accumulator = 0;
+    const speedPerFrame = 0.45; // Deslizamento sereno (~27px/seg a 60fps)
+
+    const tick = () => {
+      if (!isPausedByUser && !isHovering && container) {
+        accumulator += speedPerFrame;
+        if (accumulator >= 1) {
+          const step = Math.floor(accumulator);
+          accumulator -= step;
+          container.scrollLeft += step;
+
+          const halfWidth = container.scrollWidth / 2;
+          if (halfWidth > 0 && container.scrollLeft >= halfWidth) {
+            container.scrollLeft -= halfWidth;
+          }
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [isPausedByUser, isHovering]);
+
+  // 2. Deslizamento suave via GSAP até o card selecionado (quando o usuário clica no menu ou setas)
+  const scrollToProcedureIndex = useCallback((idx: number) => {
+    const container = carouselRef.current;
+    if (!container) return;
+
+    const halfWidth = container.scrollWidth / 2;
+    const targetCardFirst = container.children[idx] as HTMLElement | undefined;
+    const targetCardSecond = container.children[idx + ALL_PROCEDURES.length] as HTMLElement | undefined;
+
+    if (!targetCardFirst) return;
+
+    // Escolhe a ocorrência mais próxima do scroll atual para evitar saltos longos
+    const firstLeft = Math.max(
+      0,
+      targetCardFirst.offsetLeft - (container.clientWidth / 2 - targetCardFirst.clientWidth / 2)
+    );
+    const secondLeft = targetCardSecond
+      ? Math.max(
+          0,
+          targetCardSecond.offsetLeft - (container.clientWidth / 2 - targetCardSecond.clientWidth / 2)
+        )
+      : firstLeft;
+
+    let finalTarget = firstLeft;
+    if (
+      container.scrollLeft > halfWidth * 0.6 &&
+      Math.abs(secondLeft - container.scrollLeft) < Math.abs(firstLeft - container.scrollLeft)
+    ) {
+      finalTarget = secondLeft;
+    }
+
+    gsap.killTweensOf(container);
+    gsap.to(container, {
+      scrollLeft: finalTarget,
+      duration: 1.05,
+      ease: "power3.out",
+    });
+
+    // Alinha também o menu superior com suavidade
     const menu = menuRef.current;
     if (menu) {
-      const btn = menu.children[activeIndex] as HTMLElement | undefined;
+      const btn = menu.children[idx] as HTMLElement | undefined;
       if (btn) {
-        const left = btn.offsetLeft - (menu.clientWidth / 2 - btn.clientWidth / 2);
-        menu.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+        const menuLeft = Math.max(
+          0,
+          btn.offsetLeft - (menu.clientWidth / 2 - btn.clientWidth / 2)
+        );
+        gsap.killTweensOf(menu);
+        gsap.to(menu, {
+          scrollLeft: menuLeft,
+          duration: 0.75,
+          ease: "power2.out",
+        });
       }
     }
-  }, [activeIndex]);
+  }, []);
 
-  // Retomar o looping apenas quando o usuário rolar e SAIR 100% da seção
+  // 3. Regra de Pausa: ao clicar no menu, pausa permanentemente enquanto a seção estiver visível.
+  // Só retoma a esteira contínua se o usuário rolar e SAIR 100% da seção de tratamentos!
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -88,9 +156,17 @@ export function TreatmentsSection() {
     return () => observer.disconnect();
   }, []);
 
-  const handleSelect = (idx: number) => {
+  const handleSelectFromMenu = (idx: number) => {
     setActiveIndex(idx);
     setIsPausedByUser(true);
+    scrollToProcedureIndex(idx);
+  };
+
+  const handleArrowStep = (dir: number) => {
+    const nextIdx = (activeIndex + dir + ALL_PROCEDURES.length) % ALL_PROCEDURES.length;
+    setActiveIndex(nextIdx);
+    setIsPausedByUser(true);
+    scrollToProcedureIndex(nextIdx);
   };
 
   const closeModal = useCallback(() => setSelectedItem(null), []);
@@ -127,25 +203,25 @@ export function TreatmentsSection() {
             </h2>
           </div>
           <p className="font-body text-xs sm:text-sm text-[#475866] dark:text-[#B2C3CC] max-w-md leading-relaxed">
-            Clique em um procedimento no menu abaixo para pausar e explorar os detalhes, ou acesse a página completa da especialidade.
+            Toque em um tratamento no menu para destacá-lo e pausar a vitrine, ou deslize livremente para conhecer cada opção.
           </p>
         </div>
 
         {/* Menu Superior Interativo dos Procedimentos */}
         <div
           ref={menuRef}
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1.5 mb-5 scroll-smooth"
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1.5 mb-5"
         >
           {ALL_PROCEDURES.map((proc, idx) => {
-            const isSelected = activeIndex === idx;
+            const isSelected = isPausedByUser && activeIndex === idx;
             return (
               <button
                 key={proc.id}
                 type="button"
-                onClick={() => handleSelect(idx)}
-                className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-body font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                onClick={() => handleSelectFromMenu(idx)}
+                className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-body font-semibold whitespace-nowrap shrink-0 transition-all duration-300 cursor-pointer ${
                   isSelected
-                    ? "bg-[#173B38] text-white dark:bg-[#6BA89E] dark:text-[#0D1622] shadow-sm"
+                    ? "bg-[#173B38] text-white dark:bg-[#6BA89E] dark:text-[#0D1622] shadow-sm scale-[1.02]"
                     : "bg-[#F4F7F6] dark:bg-[#162333] text-[#475866] dark:text-[#B2C3CC] border border-[#DCE5E3] dark:border-[#6BA89E]/20 hover:border-[#6BA89E]"
                 }`}
               >
@@ -155,21 +231,18 @@ export function TreatmentsSection() {
           })}
         </div>
 
-        {/* Indicador de Status & Setas */}
+        {/* Barra de Status & Controles Manuais */}
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
-            <span className="text-[0.6875rem] font-body font-semibold uppercase tracking-wider text-[#6C7D8A] dark:text-[#8499A6]">
-              {activeIndex + 1} de {ALL_PROCEDURES.length}
-            </span>
             {isPausedByUser ? (
-              <span className="inline-flex items-center gap-1 text-[0.6875rem] px-2.5 py-0.5 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/20 text-[#475866] dark:text-[#B2C3CC]">
-                <Pause className="w-2.5 h-2.5 text-[#173B38] dark:text-[#6BA89E]" />
-                Fixado na sua seleção
+              <span className="inline-flex items-center gap-1.5 text-[0.6875rem] px-3 py-1 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/25 text-[#0D1622] dark:text-[#EBF2F0] font-medium">
+                <Pause className="w-3 h-3 text-[#173B38] dark:text-[#6BA89E]" />
+                <span>Seleção fixada • {ALL_PROCEDURES[activeIndex]?.name}</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[0.6875rem] px-2.5 py-0.5 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/20 text-[#173B38] dark:text-[#6BA89E]">
-                <Play className="w-2.5 h-2.5" />
-                Apresentação contínua
+              <span className="inline-flex items-center gap-1.5 text-[0.6875rem] px-3 py-1 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/20 text-[#173B38] dark:text-[#6BA89E] font-medium">
+                <Play className="w-3 h-3" />
+                <span>Vitrine em deslize suave ({ALL_PROCEDURES.length} procedimentos)</span>
               </span>
             )}
           </div>
@@ -177,22 +250,16 @@ export function TreatmentsSection() {
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => {
-                setIsPausedByUser(true);
-                setActiveIndex((p) => (p - 1 + ALL_PROCEDURES.length) % ALL_PROCEDURES.length);
-              }}
-              className="p-2 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/25 text-[#0D1622] dark:text-[#EBF2F0] hover:border-[#6BA89E] cursor-pointer"
+              onClick={() => handleArrowStep(-1)}
+              className="p-2 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/25 text-[#0D1622] dark:text-[#EBF2F0] hover:border-[#6BA89E] transition-colors cursor-pointer"
               aria-label="Tratamento anterior"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               type="button"
-              onClick={() => {
-                setIsPausedByUser(true);
-                setActiveIndex((p) => (p + 1) % ALL_PROCEDURES.length);
-              }}
-              className="p-2 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/25 text-[#0D1622] dark:text-[#EBF2F0] hover:border-[#6BA89E] cursor-pointer"
+              onClick={() => handleArrowStep(1)}
+              className="p-2 rounded-full bg-[#F4F7F6] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/25 text-[#0D1622] dark:text-[#EBF2F0] hover:border-[#6BA89E] transition-colors cursor-pointer"
               aria-label="Próximo tratamento"
             >
               <ChevronRight className="w-4 h-4" />
@@ -200,58 +267,78 @@ export function TreatmentsSection() {
           </div>
         </div>
 
-        {/* Carrossel Lateral Compacto */}
+        {/* Esteira Horizontal Contínua com Fotos em Cada Card */}
         <div
           ref={carouselRef}
-          className="flex items-stretch gap-4 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth py-2 mb-8"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+          onTouchStart={() => setIsPausedByUser(true)}
+          className="flex items-stretch gap-4 sm:gap-5 overflow-x-auto no-scrollbar py-2 mb-8"
         >
-          {ALL_PROCEDURES.map((proc, idx) => {
-            const isSelected = activeIndex === idx;
+          {LOOP_PROCEDURES.map((proc, loopIdx) => {
+            const realIdx = loopIdx % ALL_PROCEDURES.length;
+            const isHighlighted = isPausedByUser && activeIndex === realIdx;
             const waUrl = `https://wa.me/${CLINIC_INFO.whatsappNumber}?text=${encodeURIComponent(
               proc.whatsappMessage
             )}`;
 
             return (
               <div
-                key={proc.id}
-                onClick={() => handleSelect(idx)}
-                className={`w-[290px] sm:w-[335px] shrink-0 rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 cursor-pointer border ${
-                  isSelected
-                    ? "bg-[#F4F7F6] dark:bg-[#162333] border-[#6BA89E] shadow-lg ring-1 ring-[#6BA89E]/30"
-                    : "bg-[#FFFFFF] dark:bg-[#162333]/65 border-[#DCE5E3] dark:border-[#6BA89E]/15 opacity-85 hover:opacity-100"
+                key={`${proc.id}-${loopIdx}`}
+                onClick={() => handleSelectFromMenu(realIdx)}
+                className={`w-[275px] sm:w-[315px] shrink-0 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-500 cursor-pointer border group ${
+                  isHighlighted
+                    ? "bg-[#F4F7F6] dark:bg-[#162333] border-[#6BA89E] shadow-[0_14px_34px_rgba(23,59,56,0.14)] ring-1 ring-[#6BA89E]/40 scale-[1.01]"
+                    : "bg-[#FFFFFF] dark:bg-[#162333]/80 border-[#DCE5E3] dark:border-[#6BA89E]/20 hover:border-[#6BA89E]/70 shadow-xs"
                 }`}
               >
+                {/* Imagem Visual do Procedimento (Compacta e Nítida) */}
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[0.6875rem] font-body font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#0D1622] text-[#173B38] dark:text-[#6BA89E] border border-[#DCE5E3] dark:border-[#6BA89E]/25">
+                  <div className="relative w-full aspect-[16/10] bg-[#E8EFEE] dark:bg-[#0D1622] overflow-hidden">
+                    <Image
+                      src={proc.image}
+                      alt={proc.name}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="320px"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D1622]/45 via-transparent to-transparent pointer-events-none" />
+                    <span className="absolute top-2.5 left-2.5 text-[0.625rem] font-body font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FFFFFF]/95 dark:bg-[#0D1622]/90 text-[#173B38] dark:text-[#6BA89E] backdrop-blur-sm shadow-2xs">
                       {proc.badge}
                     </span>
-                    <Sparkles className="w-3.5 h-3.5 text-[#6BA89E]" />
+                    <span className="absolute top-2.5 right-2.5 p-1 rounded-full bg-[#FFFFFF]/85 dark:bg-[#0D1622]/85 text-[#6BA89E]">
+                      <Sparkles className="w-3 h-3" />
+                    </span>
                   </div>
 
-                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-[#0D1622] dark:text-[#EBF2F0] mb-2 leading-snug">
-                    {proc.name}
-                  </h3>
-
-                  <p className="font-body text-xs sm:text-sm text-[#475866] dark:text-[#B2C3CC] leading-relaxed line-clamp-3 mb-4">
-                    {proc.summary}
-                  </p>
+                  {/* Conteúdo Textual */}
+                  <div className="p-4 sm:p-5 pb-3">
+                    <h3 className="font-heading text-base sm:text-lg font-semibold text-[#0D1622] dark:text-[#EBF2F0] mb-1.5 leading-snug group-hover:text-[#173B38] dark:group-hover:text-[#6BA89E] transition-colors">
+                      {proc.name}
+                    </h3>
+                    <p className="font-body text-xs text-[#475866] dark:text-[#B2C3CC] leading-relaxed line-clamp-3">
+                      {proc.summary}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#DCE5E3] dark:border-[#6BA89E]/15 space-y-2 mt-auto">
+                {/* Ações do Card */}
+                <div className="px-4 sm:px-5 pb-4 pt-2 border-t border-[#DCE5E3]/70 dark:border-[#6BA89E]/15 space-y-2 mt-auto">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setIsPausedByUser(true);
+                      setActiveIndex(realIdx);
                       setSelectedItem(proc);
                     }}
-                    className="w-full py-2 px-3 rounded-xl bg-[#FFFFFF] dark:bg-[#0D1622] border border-[#DCE5E3] dark:border-[#6BA89E]/25 hover:border-[#6BA89E] text-xs font-body font-semibold text-[#0D1622] dark:text-[#EBF2F0] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="w-full py-1.5 px-3 rounded-xl bg-[#F4F7F6] dark:bg-[#0D1622] border border-[#DCE5E3] dark:border-[#6BA89E]/25 hover:border-[#6BA89E] text-[0.6875rem] font-body font-semibold text-[#0D1622] dark:text-[#EBF2F0] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Info className="w-3.5 h-3.5 text-[#6BA89E]" />
                     <span>Ver benefícios e detalhes</span>
                   </button>
 
-                  <div className="flex items-center justify-between pt-1 text-xs font-body font-semibold">
+                  <div className="flex items-center justify-between pt-0.5 text-[0.6875rem] sm:text-xs font-body font-semibold">
                     <a
                       href={waUrl}
                       target="_blank"
@@ -278,7 +365,7 @@ export function TreatmentsSection() {
           })}
         </div>
 
-        {/* Atalhos para Páginas Dedicadas das 6 Áreas */}
+        {/* Atalhos Rápidos para as 6 Páginas de Especialidades */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {TREATMENT_CATEGORIES.map((cat) => (
             <Link
@@ -297,7 +384,7 @@ export function TreatmentsSection() {
         </div>
       </div>
 
-      {/* Modal Quick View do Tratamento */}
+      {/* Modal Quick View do Tratamento com Imagem */}
       {selectedItem && (
         <div
           role="dialog"
@@ -307,7 +394,7 @@ export function TreatmentsSection() {
           onClick={closeModal}
         >
           <div
-            className="relative max-w-lg w-full bg-[#FFFFFF] dark:bg-[#162333] text-[#0D1622] dark:text-[#EBF2F0] rounded-3xl border border-[#DCE5E3] dark:border-[#6BA89E]/25 shadow-2xl p-6 sm:p-8 space-y-5 animate-fade-in-up"
+            className="relative max-w-lg w-full max-h-[90vh] overflow-y-auto bg-[#FFFFFF] dark:bg-[#162333] text-[#0D1622] dark:text-[#EBF2F0] rounded-3xl border border-[#DCE5E3] dark:border-[#6BA89E]/25 shadow-2xl p-6 sm:p-8 space-y-5 animate-fade-in-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -327,6 +414,16 @@ export function TreatmentsSection() {
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-[#DCE5E3] dark:border-[#6BA89E]/20">
+              <Image
+                src={selectedItem.image}
+                alt={selectedItem.name}
+                fill
+                className="object-cover"
+                sizes="500px"
+              />
             </div>
 
             <p className="font-body text-sm text-[#475866] dark:text-[#B2C3CC] leading-relaxed">

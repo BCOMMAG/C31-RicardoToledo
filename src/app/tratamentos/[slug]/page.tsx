@@ -119,6 +119,15 @@ export default async function TreatmentCategoryPage({
                   className="p-6 sm:p-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#162333] border border-[#DCE5E3] dark:border-[#6BA89E]/20 flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
+                    <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-[#DCE5E3] dark:border-[#6BA89E]/20 mb-2 bg-[#F4F7F6] dark:bg-[#0D1622]">
+                      <Image
+                        src={proc.image}
+                        alt={proc.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 480px"
+                      />
+                    </div>
                     <span className="inline-block text-[0.6875rem] uppercase tracking-wider font-semibold px-2.5 py-0.5 rounded-full bg-[#F4F7F6] dark:bg-[#0D1622] text-[#173B38] dark:text-[#6BA89E] border border-[#DCE5E3] dark:border-[#6BA89E]/25">
                       {proc.badge}
                     </span>
@@ -194,3 +203,4 @@ export default async function TreatmentCategoryPage({
     </div>
   );
 }
+

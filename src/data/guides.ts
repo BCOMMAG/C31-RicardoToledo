@@ -275,3 +275,4 @@ export const EDUCATIONAL_GUIDES: EducationalGuide[] = [
       "Olá! Gostaria de agendar uma revisão preventiva na Odontologia Dr. Ricardo A. Toledo.",
   },
 ];
+

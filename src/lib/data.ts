@@ -124,3 +124,4 @@ export const FAQS: FaqItem[] = [
       "Estamos na Av. Ver. Toaldo Túlio, 3225, no bairro São Braz em Curitiba - PR. Atendemos de segunda a quinta das 09h às 18h e sexta das 09h às 16h. Você pode agendar rapidamente pelo WhatsApp (41) 99114-6000 ou pelo telefone fixo (41) 3039-4040.",
   },
 ];
+

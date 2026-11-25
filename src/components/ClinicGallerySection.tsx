@@ -230,3 +230,4 @@ export function ClinicGallerySection() {
     </section>
   );
 }
+
