@@ -63,14 +63,14 @@ export function Navbar() {
               className="flex items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6BA89E] rounded-lg shrink-0"
               aria-label={`Ir para o início — ${CLINIC_INFO.name}`}
             >
-              <div className="relative h-11 sm:h-13 md:h-14 w-38 sm:w-44 md:w-52 transition-transform duration-300 group-hover:scale-[1.02]">
+              <div className="relative h-12 sm:h-14 md:h-16 w-44 sm:w-52 md:w-58 transition-transform duration-300 group-hover:scale-[1.02]">
                 <Image
                   src={logoSrc}
                   alt={CLINIC_INFO.name}
                   fill
                   priority
                   className="object-contain object-left"
-                  sizes="(max-width: 640px) 160px, 210px"
+                  sizes="(max-width: 640px) 180px, 240px"
                 />
               </div>
             </Link>
